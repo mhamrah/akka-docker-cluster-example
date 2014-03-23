@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "Build docker container"
+
+sbt universal:stage
+
+rm -rf docker/tmp/
+cp -r target/universal/stage/ docker/tmp/
+
+docker build -rm -t clustering docker/
+
+rm -rf docker/tmp/
