@@ -7,17 +7,14 @@ An example akka-cluster project with docker support. See [the blog post](http://
 
 Run ```bin/dockerize``` to run sbt native packager to create a distribution and build a docker container named _clustering_.
 
-Run
+To launch the first node, which will be the seed node:
 
 ```
 $ docker run -i -t -name seed clustering
 ```
 
-to launch a seed node and run
+To add a member to the cluster:
 
 ```
 $ docker run -name c1 -link seed:seed -i -t clustering
 ```
-
-to add a member to the cluster.
-
