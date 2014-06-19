@@ -1,3 +1,7 @@
+import DockerKeys._
+import sbtdocker.{ Dockerfile, ImageName}
+import com.typesafe.sbt.packager.Keys._
+
 name := "clustering"
 
 organization := "com.mlh"
@@ -17,22 +21,13 @@ scmInfo := Some(
 )
 
 /* scala versions and options */
-scalaVersion := "2.10.3"
-
-crossScalaVersions := Seq(
-/*  "2.9.3-RC1",
-  "2.9.2",
-  "2.9.1", "2.9.1-1",
-  "2.9.0", "2.9.0-1",
-  "2.8.0", "2.8.1", "2.8.2" */
-)
+scalaVersion := "2.11.1"
 
 // These options will be used for *all* versions.
 scalacOptions ++= Seq(
   "-deprecation"
   ,"-unchecked"
   ,"-encoding", "UTF-8"
-  ,"-target:jvm-1.7"
   ,"-Xlint"
   // "-optimise"   // this option will slow your build
 )
@@ -45,34 +40,23 @@ scalacOptions ++= Seq(
 // These language flags will be used only for 2.10.x.
 // Uncomment those you need, or if you hate SIP-18, all of them.
 scalacOptions <++= scalaVersion map { sv =>
-  if (sv startsWith "2.10") List(
+  if (sv startsWith "2.11") List(
     "-Xverify"
-    ,"-Ywarn-all"
     ,"-feature"
     ,"-language:postfixOps"
-    // "-language:reflectiveCalls",
-    // "-language:implicitConversions"
-    // "-language:higherKinds",
-    // "-language:existentials",
-    // "-language:experimental.macros",
-    // "-language:experimental.dynamics"
   )
   else Nil
 }
 
 javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
 
-val akka = "2.3.0"
-//val spray = "1.3.0"
+val akka = "2.3.3"
 
 /* dependencies */
 libraryDependencies ++= Seq (
-  "com.github.nscala-time" %% "nscala-time" % "0.8.0"
-  // -- network --
-  //,"net.databinder.dispatch" %% "dispatch-core" % "0.10.1"
+  "com.github.nscala-time" %% "nscala-time" % "1.2.0"
   // -- testing --
   , "org.scalatest" % "scalatest_2.10" % "2.1.0" % "test"
-  , "org.scalamock" %% "scalamock-scalatest-support" % "3.0.1" % "test"
   // -- Logging --
   ,"ch.qos.logback" % "logback-classic" % "1.1.1"
   // -- Akka --
@@ -80,14 +64,8 @@ libraryDependencies ++= Seq (
   ,"com.typesafe.akka" %% "akka-actor" % akka
   ,"com.typesafe.akka" %% "akka-slf4j" % akka
   ,"com.typesafe.akka" %% "akka-cluster" % akka
-  // -- Sql --
-  //,"com.typesafe.slick" %% "slick" % "1.0.1"
-  // -- Spray --
-  //,"io.spray" % "spray-routing" % spray
-  //,"io.spray" % "spray-client" % spray
-  //,"io.spray" % "spray-testkit" % spray % "test"
   // -- json --
-  ,"org.json4s" %% "json4s-jackson" % "3.2.7"
+  ,"org.json4s" %% "json4s-jackson" % "3.2.10"
   // -- config --
   ,"com.typesafe" % "config" % "1.2.0"
 )
@@ -99,8 +77,34 @@ resolvers ++= Seq(
   //"spray repo" at "http://repo.spray.io"
 )
 
-//atmosSettings
-
-packageArchetype.java_application
+packageArchetype.java_server
 
 seq(Revolver.settings: _*)
+
+sbtdocker.Plugin.dockerSettings
+
+docker <<= docker.dependsOn(com.typesafe.sbt.packager.universal.Keys.stage.in(Compile))
+
+// Define a Dockerfile
+dockerfile in docker <<= (name, stagingDirectory in Universal) map {
+  case (appName, stageDir) =>
+    val workingDir = s"/opt/${appName}"
+    new Dockerfile {
+      // Use a base image that contain Java
+      from("relateiq/oracle-java8")
+      maintainer("Michael Hamrah <m@hamrah.com>")
+      expose(1600)
+      add(stageDir, workingDir)
+      run("chmod",  "+x",  s"/opt/${appName}/bin/${appName}")
+      workDir(workingDir)
+      entryPointShell(s"CLUSTER_IP=`/sbin/ifconfig", "eth0", "|", "grep", "'inet", "addr:'", "|", "cut", "-d:", "-f2", "|", "awk", "'{", "print", "$1", "}'`", s"bin/${appName}")
+    }
+}
+
+imageName in docker := {
+  ImageName(
+    namespace = Some("hamrah.com"),
+    repository = name.value
+    //,tag = Some("v" + version.value))
+  )
+}
