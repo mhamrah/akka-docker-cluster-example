@@ -83,6 +83,8 @@ seq(Revolver.settings: _*)
 
 sbtdocker.Plugin.dockerSettings
 
+mappings in Universal += baseDirectory.value / "docker" / "start" -> "bin/start"
+
 docker <<= docker.dependsOn(com.typesafe.sbt.packager.universal.Keys.stage.in(Compile))
 
 // Define a Dockerfile
@@ -96,8 +98,9 @@ dockerfile in docker <<= (name, stagingDirectory in Universal) map {
       expose(1600)
       add(stageDir, workingDir)
       run("chmod",  "+x",  s"/opt/${appName}/bin/${appName}")
+      run("chmod",  "+x",  s"/opt/${appName}/bin/start")
       workDir(workingDir)
-      entryPointShell(s"CLUSTER_IP=`/sbin/ifconfig", "eth0", "|", "grep", "'inet", "addr:'", "|", "cut", "-d:", "-f2", "|", "awk", "'{", "print", "$1", "}'`", s"bin/${appName}")
+      entryPointShell(s"bin/start", appName, "$@")
     }
 }
 
