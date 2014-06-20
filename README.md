@@ -1,11 +1,11 @@
 akka-docker-cluster-example
 ===========================
 
-An example akka-cluster project with docker support. See [the blog post](http://blog.michaelhamrah.com/2014/03/running-an-akk…ker-containers/). Uses [SBT Native Packager](https://github.com/sbt/sbt-native-packager) and [SBT Docker](https://github.com/marcuslonnberg/sbt-docker) to build docker containers for akka-clusters.
+An example akka-cluster project with docker support. See [the blog post](http://blog.michaelhamrah.com/2014/06/akka-clustering-with-sbt-docker-and-sbt-native-packager/). Uses [SBT Native Packager](https://github.com/sbt/sbt-native-packager) and [SBT Docker](https://github.com/marcuslonnberg/sbt-docker) to build docker containers for akka-clusters.
 
 ### How to Run
 
-In SBT, just run ```docker``` from sbt-docker. There's a dependency on package so sbt-native-packager will be triggered automagically. 
+In SBT, just run ```docker``` from sbt-docker. There's a dependency on ```stage``` so sbt-native-packager will be triggered automagically. 
 
 To launch the first node, which will be the seed node:
 
