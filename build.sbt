@@ -1,12 +1,8 @@
-import DockerKeys._
-import sbtdocker.{ Dockerfile, ImageName}
-import com.typesafe.sbt.packager.Keys._
-
 name := "clustering"
 
 organization := "com.mlh"
 
-version := "0.1.0-SNAPSHOT"
+version := "0.3"
 
 homepage := Some(url("https://github.com/mhamrah/clustering"))
 
@@ -21,7 +17,7 @@ scmInfo := Some(
 )
 
 /* scala versions and options */
-scalaVersion := "2.11.1"
+scalaVersion := "2.11.4"
 
 // These options will be used for *all* versions.
 scalacOptions ++= Seq(
@@ -29,28 +25,14 @@ scalacOptions ++= Seq(
   ,"-unchecked"
   ,"-encoding", "UTF-8"
   ,"-Xlint"
-  // "-optimise"   // this option will slow your build
+  ,"-Yclosure-elim"
+  ,"-Yinline"
+  ,"-Xverify"
+  ,"-feature"
+  ,"-language:postfixOps"
 )
 
-scalacOptions ++= Seq(
-  "-Yclosure-elim",
-  "-Yinline"
-)
-
-// These language flags will be used only for 2.10.x.
-// Uncomment those you need, or if you hate SIP-18, all of them.
-scalacOptions <++= scalaVersion map { sv =>
-  if (sv startsWith "2.11") List(
-    "-Xverify"
-    ,"-feature"
-    ,"-language:postfixOps"
-  )
-  else Nil
-}
-
-javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation")
-
-val akka = "2.3.3"
+val akka = "2.3.7"
 
 /* dependencies */
 libraryDependencies ++= Seq (
@@ -70,44 +52,12 @@ libraryDependencies ++= Seq (
   ,"com.typesafe" % "config" % "1.2.0"
 )
 
-/* you may need these repos */
-resolvers ++= Seq(
-  // Resolver.sonatypeRepo("snapshots")
-  // Resolver.typesafeRepo("releases")
-  //"spray repo" at "http://repo.spray.io"
-)
+maintainer := "Michael Hamrah <m@hamrah.com>"
 
-packageArchetype.java_server
+dockerExposedPorts in Docker := Seq(1600)
 
-seq(Revolver.settings: _*)
+dockerEntrypoint in Docker := Seq("sh", "-c", "CLUSTER_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1 }'` bin/clustering $*")
 
-sbtdocker.Plugin.dockerSettings
+dockerRepository := Some("mhamrah")
 
-mappings in Universal += baseDirectory.value / "docker" / "start" -> "bin/start"
-
-docker <<= docker.dependsOn(com.typesafe.sbt.packager.universal.Keys.stage.in(Compile))
-
-// Define a Dockerfile
-dockerfile in docker <<= (name, stagingDirectory in Universal) map {
-  case (appName, stageDir) =>
-    val workingDir = s"/opt/${appName}"
-    new Dockerfile {
-      // Use a base image that contain Java
-      from("relateiq/oracle-java8")
-      maintainer("Michael Hamrah <m@hamrah.com>")
-      expose(1600)
-      add(stageDir, workingDir)
-      run("chmod",  "+x",  s"/opt/${appName}/bin/${appName}")
-      run("chmod",  "+x",  s"/opt/${appName}/bin/start")
-      workDir(workingDir)
-      entryPointShell(s"bin/start", appName, "$@")
-    }
-}
-
-imageName in docker := {
-  ImageName(
-    namespace = Some("hamrah.com"),
-    repository = name.value
-    //,tag = Some("v" + version.value))
-  )
-}
+enablePlugins(JavaAppPackaging)

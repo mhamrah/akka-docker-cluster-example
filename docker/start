@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# Do whatever service discovery magic you want
-
-# Set CLUSTER_IP by parsing if_config before running sbt native packager script
-CLUSTER_IP=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'` bin/$1 ${*:2}
