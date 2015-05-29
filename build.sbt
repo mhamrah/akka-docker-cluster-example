@@ -60,4 +60,5 @@ dockerEntrypoint in Docker := Seq("sh", "-c", "CLUSTER_IP=`/sbin/ifconfig eth0 |
 
 dockerRepository := Some("mhamrah")
 
+dockerBaseImage := "java"
 enablePlugins(JavaAppPackaging)
