@@ -5,16 +5,8 @@ An example akka-cluster project with docker support. See [the blog post](http://
 
 ### How to Run
 
-In SBT, just run ```docker:publishLocal``` to create a local docker container. 
+In SBT, just run `docker:publishLocal` to create a local docker container. 
 
-To launch the first node, which will be the seed node:
+To run the cluster, run `docker-compose up`. This will create 3 nodes, a seed and two regular members, called `seed`, `c1`, and `c2` respectively.
 
-```
-$ docker run -i -t --rm --name seed mhamrah/clustering:0.3
-```
-
-To add a member to the cluster:
-
-```
-$ docker run --rm --name c1 --link seed:seed -i -t mhamrah/clustering:0.3
-```
+While running, try opening a new terminal and (from the same directory) try things like `docker-compose down seed` and watch the cluster nodes respond.
