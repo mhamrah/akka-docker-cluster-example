@@ -11,4 +11,4 @@ project/boot/
 project/plugins/project/
 
 # Scala-IDE specific
-.cala_dependencies
+.scala_dependencies
