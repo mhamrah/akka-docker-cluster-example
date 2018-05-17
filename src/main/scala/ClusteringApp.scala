@@ -11,5 +11,5 @@ object ClusteringApp extends App {
 
    val clusterListener = system.actorOf(Props[ClusterListener], name = "clusterListener")
 
-  sys.addShutdownHook(system.shutdown())
+  sys.addShutdownHook(system.terminate())
 }
